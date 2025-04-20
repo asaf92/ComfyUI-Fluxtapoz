@@ -75,10 +75,10 @@ class FlowEditCFGGuiderNode:
         return (guider,)
 
 
-def get_flowedit_sample(skip_steps, refine_steps, seed):
-    generator = torch.manual_seed(seed)
+def get_flowedit_sample(skip_steps, refine_steps, seed, n_avg=1):
     @torch.no_grad()
     def flowedit_sample(model, x_init, sigmas, extra_args=None, callback=None, disable=None):
+        generator = torch.Generator().manual_seed(seed)
         extra_args = {} if extra_args is None else extra_args
 
         model_options = extra_args.get('model_options', {})
