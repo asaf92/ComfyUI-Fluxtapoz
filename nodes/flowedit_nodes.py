@@ -97,29 +97,33 @@ def get_flowedit_sample(skip_steps, refine_steps, seed, n_avg=1):
 
         for i in trange(N, disable=disable):
             sigma = sigmas[i]
-            noise = torch.randn(x_init.shape, generator=generator).to(x_init.device)
-
-            zt_src = (1-sigma)*x_init + sigma*noise
-            
-            if i < N-refine_steps:
-                zt_tgt = x_tgt + zt_src - x_init
-                transformer_options['latent_type'] = 'source'
-                source_extra_args['model_options']['transformer_options']['latent_type'] = 'source'
-                vt_src = model(zt_src, sigma*s_in, **source_extra_args)
-            else:
-                if i == N-refine_steps:
-                    x_tgt = x_tgt + zt_src - x_init
-                zt_tgt = x_tgt
-                vt_src = 0
-                
-            transformer_options['latent_type'] = 'target'
-            vt_tgt = model(zt_tgt, sigma*s_in, **extra_args)
-            
-            v_delta = vt_tgt - vt_src
-            x_tgt += (sigmas[i+1] - sigmas[i]) * v_delta
-            
+            delta_sigma = sigmas[i+1] - sigma
+            vs = []
+            # average over n_avg noise samples per step for smoother guidance
+            for n in range(n_avg):
+                noise = torch.randn(x_init.shape, generator=generator).to(x_init.device)
+                zt_src = (1 - sigma) * x_init + sigma * noise
+                if i < N - refine_steps:
+                    zt_tgt = x_tgt + zt_src - x_init
+                    transformer_options['latent_type'] = 'source'
+                    source_extra_args['model_options']['transformer_options']['latent_type'] = 'source'
+                    vt_src = model(zt_src, sigma * s_in, **source_extra_args)
+                else:
+                    if i == N - refine_steps and n == 0:
+                        x_tgt = x_tgt + zt_src - x_init
+                    zt_tgt = x_tgt
+                    vt_src = 0
+                transformer_options['latent_type'] = 'target'
+                vt_tgt = model(zt_tgt, sigma * s_in, **extra_args)
+                vs.append(vt_tgt - vt_src)
+            # mean delta across samples
+            v_delta = torch.stack(vs, dim=0).mean(0)
+            x_tgt += delta_sigma * v_delta
             if callback is not None:
-                callback({'x': x_tgt, 'denoised': x_tgt, 'i': i+skip_steps, 'sigma': sigmas[i], 'sigma_hat': sigmas[i]})
+                callback({'x': x_tgt, 'denoised': x_tgt,
+                          'i': i + skip_steps,
+                          'sigma': sigma,
+                          'sigma_hat': sigma})
 
         return x_tgt
     
@@ -133,6 +137,7 @@ class FlowEditSamplerNode:
             "skip_steps": ("INT", {"default": 4, "min": 0, "max": 0xffffffffffffffff }),
             "refine_steps": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff }),
             "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+            "n_avg": ("INT", {"default": 1, "min": 1, "max": 0xffffffffffffffff }),
         }, "optional": {
         }}
     RETURN_TYPES = ("SAMPLER",)
@@ -140,6 +145,6 @@ class FlowEditSamplerNode:
 
     CATEGORY = "fluxtapoz"
 
-    def build(self, skip_steps, refine_steps, seed):
-        sampler = KSAMPLER(get_flowedit_sample(skip_steps, refine_steps, seed))
+    def build(self, skip_steps, refine_steps, seed, n_avg):
+        sampler = KSAMPLER(get_flowedit_sample(skip_steps, refine_steps, seed, n_avg))
         return (sampler, )
