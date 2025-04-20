@@ -100,10 +100,10 @@ def get_flowedit_sample(skip_steps, refine_steps, seed, n_avg=1):
             delta_sigma = sigmas[i+1] - sigma
             vs = []
             # average over n_avg noise samples per step for smoother guidance
-            noise = torch.randn(x_init.shape, generator=generator).to(x_init.device)
-            zt_src = (1 - sigma) * x_init + sigma * noise
             if i < N - refine_steps:
                 for _ in range(n_avg):
+                    noise = torch.randn(x_init.shape, generator=generator).to(x_init.device)
+                    zt_src = (1 - sigma) * x_init + sigma * noise
                     zt_tgt = x_tgt + zt_src - x_init
                     transformer_options['latent_type'] = 'source'
                     source_extra_args['model_options']['transformer_options']['latent_type'] = 'source'
@@ -113,6 +113,8 @@ def get_flowedit_sample(skip_steps, refine_steps, seed, n_avg=1):
                     vs.append(vt_tgt - vt_src)
                 v_delta = torch.stack(vs, dim=0).mean(0)
             else:
+                noise = torch.randn(x_init.shape, generator=generator).to(x_init.device)
+                zt_src = (1 - sigma) * x_init + sigma * noise
                 if i == N - refine_steps:
                     x_tgt = x_tgt + zt_src - x_init
                 zt_tgt = x_tgt
