@@ -8,7 +8,7 @@ from .nodes.mix_noise_node import FluxNoiseMixerNode
 from .nodes.rectified_sampler_nodes import FluxForwardODESamplerNode, FluxReverseODESamplerNode
 from .nodes.rf_edit_sampler_nodes import FlowEditForwardSamplerNode, FlowEditReverseSamplerNode, PrepareAttnBankNode
 ## FlowEdit
-from .nodes.flowedit_nodes import FlowEditGuiderNode, FlowEditSamplerNode
+from .nodes.flowedit_nodes import FlowEditGuiderNode, FlowEditSamplerNode, FlowEditGuiderHybridNode, FlowEditCFGGuiderHybridNode
 ## Enhance
 from .nodes.apply_seg_node import SEGAttentionNode
 from .nodes.apply_pag_node import PAGAttentionNode
@@ -45,6 +45,8 @@ NODE_CLASS_MAPPINGS = {
     ## Flow-Edit
     "FlowEditGuider": FlowEditGuiderNode,
     "FlowEditSampler": FlowEditSamplerNode,
+    "FlowEditGuiderHybrid": FlowEditGuiderHybridNode,
+    "FlowEditCFGGuiderHybrid": FlowEditCFGGuiderHybridNode,
     ## ATTN
     "FluxAttnOverride": FluxAttnOverrideNode,
     "SEGAttention": SEGAttentionNode,
@@ -81,6 +83,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     ## FlowEdit
     "FlowEditGuider": "Flow Edit Guider",
     "FlowEditSampler": "Flow Edit Sampler",
+    "FlowEditGuiderHybrid": "Flow Edit Hybrid Guider",
+    "FlowEditCFGGuiderHybrid": "Flow Edit Hybrid CFG Guider",
     ## ATTN
     "FluxAttnOverride": "Flux Attention Override",
     "SEGAttention": "Apply Flux SEG Attention",
