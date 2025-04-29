@@ -24,6 +24,7 @@ class Flux(OriginalFlux):
         guidance: Tensor = None,
         control=None,
         transformer_options = {},
+        attn_mask=None,
     ) -> Tensor:
         if img.ndim != 3 or txt.ndim != 3:
             raise ValueError("Input img and txt tensors must have 3 dimensions.")
@@ -99,7 +100,7 @@ class Flux(OriginalFlux):
 
         transformer_options['txt_size'] = context.shape[1]
 
-        out = self.forward_orig(img, img_ids_orig, context, txt_ids, timestep, y, guidance, control, transformer_options=transformer_options)
+        out = self.forward_orig(img, img_ids_orig, context, txt_ids, timestep, y, guidance, control, transformer_options=transformer_options, attn_mask=kwargs.get("attention_mask", None))
 
         return rearrange(out, "b (h w) (c ph pw) -> b c (h ph) (w pw)", h=h_len, w=w_len, ph=2, pw=2)[:,:,:h,:w]
 

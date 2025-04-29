@@ -49,7 +49,7 @@ def ref_attention(q, k, v, pe, ref_config, ref_type, idx, txt_shape=256):
 
 
 class DoubleStreamBlock(OriginalDoubleStreamBlock):
-    def forward(self, img: Tensor, txt: Tensor, vec: Tensor, pe: Tensor, transformer_options={}):
+    def forward(self, img: Tensor, txt: Tensor, vec: Tensor, pe: Tensor, transformer_options={}, attn_mask=None):
         img_mod1, img_mod2 = self.img_mod(vec)
         txt_mod1, txt_mod2 = self.txt_mod(vec)
 
@@ -110,7 +110,7 @@ class DoubleStreamBlock(OriginalDoubleStreamBlock):
 
 
 class SingleStreamBlock(OriginalSingleStreamBlock):
-    def forward(self, x: Tensor, vec: Tensor, pe: Tensor, transformer_options={}) -> Tensor:
+    def forward(self, x: Tensor, vec: Tensor, pe: Tensor, transformer_options={}, attn_mask=None) -> Tensor:
         mod, _ = self.modulation(vec)
         x_mod = (1 + mod.scale) * self.pre_norm(x) + mod.shift
         qkv, mlp = torch.split(self.linear1(x_mod), [3 * self.hidden_size, self.mlp_hidden_dim], dim=-1)
